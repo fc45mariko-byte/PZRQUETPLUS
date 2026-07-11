@@ -1,0 +1,15 @@
+{
+  "name": "signal-agent-dossier",
+  "version": "1.0.0",
+  "description": "SIGNAL - Agent de dossier createurs. Recherche documentaire sur sources publiques uniquement.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.75.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2"
+  }
+}
