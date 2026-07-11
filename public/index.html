@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- SIGNAL — Agent de dossier créatrices -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIGNAL · Agent de dossier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#17131B; --ink-2:#211A29; --ink-3:#2E2438;
+    --bone:#ECE6DC; --bone-dim:#A99FB0;
+    --signal:#F2437E; --gold:#C9A24B; --ok:#7FD1A8;
+    --line:rgba(236,230,220,.12); --line-2:rgba(236,230,220,.22);
+    --display:'Syne',sans-serif; --body:'Inter',sans-serif; --mono:'Spline Sans Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--body);
+       line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 20px 80px}
+
+  /* header */
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+           color:var(--signal);margin:0 0 10px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,8vw,58px);line-height:.95;
+     letter-spacing:-.01em;margin:0}
+  .lede{color:var(--bone-dim);max-width:56ch;margin:14px 0 0;font-size:15px}
+  .rule{height:1px;background:var(--line);margin:26px 0}
+
+  /* intake console */
+  .console{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .console-top{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .field{flex:1 1 220px;min-width:0}
+  label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+        text-transform:uppercase;color:var(--bone-dim);margin:0 0 6px}
+  input,select,textarea{width:100%;background:var(--ink);color:var(--bone);
+        border:1px solid var(--line-2);border-radius:9px;padding:11px 12px;font-family:var(--body);
+        font-size:14px}
+  input::placeholder,textarea::placeholder{color:#6b6172}
+  textarea{resize:vertical;min-height:38px;line-height:1.4}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--signal);outline-offset:1px;border-color:transparent}
+  .btn{font-family:var(--mono);font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+       font-size:12px;border:none;border-radius:9px;padding:12px 16px;cursor:pointer;white-space:nowrap}
+  .btn-go{background:var(--signal);color:#1a0d13}
+  .btn-go:disabled{opacity:.5;cursor:not-allowed}
+  .btn-ghost{background:transparent;color:var(--bone);border:1px solid var(--line-2)}
+  .btn-gold{background:var(--gold);color:#231a06}
+  .hint{font-family:var(--mono);font-size:11px;color:#6b6172;margin:10px 0 0}
+
+  /* status / scan */
+  .status{margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--bone-dim);
+          display:none;align-items:center;gap:12px}
+  .status.on{display:flex}
+  .scan{position:relative;flex:1;height:2px;background:var(--line);overflow:hidden;border-radius:2px}
+  .scan::after{content:"";position:absolute;inset:0;width:34%;background:linear-gradient(90deg,transparent,var(--signal),transparent);
+               animation:scan 1.15s linear infinite}
+  @keyframes scan{0%{transform:translateX(-120%)}100%{transform:translateX(360%)}}
+  .err{margin-top:14px;border:1px solid var(--signal);background:rgba(242,67,126,.08);
+       border-radius:9px;padding:12px 14px;font-size:13px;color:var(--bone);display:none}
+  .err.on{display:block}
+
+  /* dossier */
+  .dossier{margin-top:22px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;
+           overflow:hidden;display:none;animation:rise .35s ease}
+  .dossier.on{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .dhead{padding:18px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .dhead h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0;flex:1 1 auto}
+  .badge{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+         padding:5px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--bone-dim)}
+  .badge.hi{color:var(--ok);border-color:rgba(127,209,168,.5)}
+  .badge.mid{color:var(--gold);border-color:rgba(201,162,75,.5)}
+  .badge.lo{color:var(--signal);border-color:rgba(242,67,126,.5)}
+
+  .group{padding:16px 18px;border-bottom:1px solid var(--line)}
+  .group:last-child{border-bottom:none}
+  .glabel{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+          color:var(--signal);margin:0 0 12px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:560px){.grid.two{grid-template-columns:1fr 1fr}}
+  .cell label{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .flag{font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:2px 6px;border-radius:5px}
+  .flag.unv{background:rgba(242,67,126,.15);color:var(--signal)}
+
+  /* leviers */
+  .levers{display:grid;gap:9px}
+  .lever{display:grid;grid-template-columns:96px 1fr 52px;align-items:center;gap:10px}
+  .lever .ln{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-dim)}
+  .track{height:8px;background:var(--ink);border-radius:6px;overflow:hidden}
+  .fill{height:100%;background:linear-gradient(90deg,var(--signal),#ff7aa6);border-radius:6px}
+  .lever input{padding:5px 7px;text-align:center;font-family:var(--mono);font-size:12px}
+
+  .sources a{color:var(--bone-dim);font-family:var(--mono);font-size:11px;word-break:break-all;
+             display:block;margin:3px 0;text-decoration:none;border-bottom:1px solid var(--line)}
+  .sources a:hover{color:var(--signal)}
+
+  .dfoot{padding:16px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+  /* base table */
+  .base{margin-top:30px}
+  .base h3{font-family:var(--display);font-weight:700;font-size:20px;margin:0 0 4px}
+  .base .sub{font-family:var(--mono);font-size:11px;color:var(--bone-dim);margin:0 0 14px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+     color:var(--bone-dim);background:var(--ink-2)}
+  td .rm{background:none;border:none;color:var(--signal);cursor:pointer;font-size:14px}
+  .empty{padding:24px;text-align:center;color:#6b6172;font-family:var(--mono);font-size:12px}
+  .basefoot{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .note{font-family:var(--mono);font-size:11px;color:#6b6172}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Signal · module de collecte</p>
+  <h1>Agent de dossier</h1>
+  <p class="lede">Entre une créatrice (Instagram ou TikTok). L'agent lit les sources publiques et remplit une fiche structurée : parcours, percée, persona, formats, contrat émotionnel, monétisation, leviers. Tu corriges, puis tu ajoutes à la base.</p>
+
+  <div class="rule"></div>
+
+  <div class="console">
+    <div class="console-top">
+      <div class="field">
+        <label for="name">Nom ou pseudo</label>
+        <input id="name" placeholder="ex. Léna Situations, @creatrice…" autocomplete="off">
+      </div>
+      <div class="field" style="flex:0 0 140px">
+        <label for="plat">Plateforme</label>
+        <select id="plat">
+          <option value="">Indifférent</option>
+          <option>Instagram</option>
+          <option>TikTok</option>
+        </select>
+      </div>
+      <button class="btn btn-go" id="go">Rechercher &amp; remplir</button>
+    </div>
+    <p class="hint">Sources publiques uniquement. Les champs introuvables sont marqués « non vérifié » — jamais inventés.</p>
+
+    <div class="status" id="status">
+      <span id="statusTxt">Recherche…</span>
+      <span class="scan"></span>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <!-- dossier gets injected here -->
+  <div id="dossierMount"></div>
+
+  <div class="base">
+    <h3>Base de données</h3>
+    <p class="sub">Session en cours — exporte avant de fermer, rien n'est sauvegardé automatiquement.</p>
+    <div class="tablewrap">
+      <table id="tbl">
+        <thead><tr>
+          <th>Nom</th><th>Plateforme</th><th>Archétype</th><th>Percée</th><th>Confiance</th><th></th>
+        </tr></thead>
+        <tbody id="tbody"><tr><td colspan="6" class="empty">Aucune fiche ajoutée pour l'instant.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="basefoot">
+      <button class="btn btn-gold" id="export">Exporter CSV</button>
+      <span class="note" id="count">0 fiche</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const base = [];
+
+const LEVERS = [["attention","Attention"],["identite","Identité"],["recit","Récit"],
+                ["preuve","Preuve"],["psychologie","Psycho"],["conversion","Conversion"]];
+
+const SCHEMA = [
+  {g:"Méta & régime", two:true, fields:[
+    ["handle","Handle / @"],
+    ["plateforme_principale","Plateforme principale"],
+    ["plateformes_secondaires","Plateformes secondaires"],
+    ["regime_tag","Régime (plateforme + année percée)"],
+    ["statut","Statut (actif / déclin / pivot)"],
+  ]},
+  {g:"Pré-notoriété", two:false, fields:[
+    ["background","Parcours avant notoriété"],
+    ["audience_amorce","Audience amorce (following préexistant)"],
+    ["avantages_injustes","Avantages injustes (capital, réseau, média antérieur)"],
+  ]},
+  {g:"Breakthrough", two:true, fields:[
+    ["breakthrough_vecteur","Vecteur de percée"],
+    ["breakthrough_type","Engineered ou accidentel"],
+    ["facteur_chance","Facteur exogène / chance"],
+    ["replicabilite","Réplicabilité aujourd'hui (1–5)"],
+  ]},
+  {g:"Persona & positionnement", two:true, fields:[
+    ["archetype_primaire","Archétype primaire"],
+    ["archetype_secondaire","Archétype secondaire"],
+    ["construction_persona","Construction de la persona"],
+    ["lane","Lane occupée"],
+    ["angle_unique","Angle unique / différenciation"],
+  ]},
+  {g:"Système de contenu", two:true, fields:[
+    ["formats","Formats principaux"],
+    ["cadence","Cadence"],
+    ["codes_visuels","Codes visuels (palette, signatures)"],
+  ]},
+  {g:"Audience & psychologie", two:false, fields:[
+    ["audience_cible","Audience cible"],
+    ["contrat_emotionnel","Contrat émotionnel (le besoin comblé)"],
+  ]},
+  {g:"Monétisation & statut", two:true, fields:[
+    ["monetisation","Flux de revenus"],
+    ["conversion_statut","Visibilité → statut / business"],
+  ]},
+  {g:"Empreinte éthique", two:false, fields:[
+    ["empreinte","Controverse manufacturée, sponsoring non divulgué, persona empruntée ?"],
+  ]},
+];
+
+// --- calls our own backend, never the Anthropic API directly ------
+async function research(name, plat){
+  const res = await fetch("/api/research",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ name, platform: plat })
+  });
+  const data = await res.json().catch(()=>null);
+  if(!res.ok || !data) throw new Error((data && data.error) || ("http "+res.status));
+  return data;
+}
+
+// --- render the editable dossier ----------------------------------
+let current = null;
+
+function confClass(c){ c=(c||"").toLowerCase();
+  if(c.startsWith("élev")||c.startsWith("elev")) return "hi";
+  if(c.startsWith("moy")) return "mid"; return "lo"; }
+
+function renderDossier(d){
+  current = d;
+  const unv = new Set(d.champs_non_verifies||[]);
+  const cell = (key,label) => {
+    const val = (d[key]??"")===""?"non vérifié":d[key];
+    const flag = (unv.has(key)||String(val).toLowerCase()==="non vérifié")
+      ? `<span class="flag unv">non vérifié</span>` : "";
+    const long = String(val).length>40;
+    const input = long
+      ? `<textarea data-k="${key}">${esc(val)}</textarea>`
+      : `<input data-k="${key}" value="${esc(val)}">`;
+    return `<div class="cell"><label>${label}${flag}</label>${input}</div>`;
+  };
+  let html = `
+    <div class="dossier on" id="dossier">
+      <div class="dhead">
+        <h2 contenteditable data-k="nom">${esc(d.nom||"—")}</h2>
+        <span class="badge ${confClass(d.confiance)}">confiance ${esc(d.confiance||"?")}</span>
+      </div>`;
+  for(const grp of SCHEMA){
+    html += `<div class="group"><p class="glabel">${grp.g}</p>
+      <div class="grid ${grp.two?"two":""}">`;
+    for(const [k,l] of grp.fields) html += cell(k,l);
+    html += `</div></div>`;
+  }
+  // leviers
+  const lv = d.leviers||{};
+  html += `<div class="group"><p class="glabel">Profil de leviers (0–100)</p><div class="levers">`;
+  for(const [k,l] of LEVERS){
+    const v = Math.max(0,Math.min(100, Number(lv[k])||0));
+    html += `<div class="lever">
+      <span class="ln">${l}</span>
+      <span class="track"><span class="fill" style="width:${v}%"></span></span>
+      <input data-lever="${k}" value="${v}" inputmode="numeric"></div>`;
+  }
+  html += `</div></div>`;
+  // sources
+  html += `<div class="group"><p class="glabel">Sources</p><div class="sources">`;
+  const srcs = (d.sources||[]).filter(Boolean);
+  html += srcs.length ? srcs.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>`).join("")
+                      : `<span class="note">Aucune source retournée.</span>`;
+  html += `</div></div>`;
+  html += `<div class="dfoot">
+      <button class="btn btn-go" id="add">Ajouter à la base</button>
+      <button class="btn btn-ghost" id="discard">Ignorer</button>
+    </div></div>`;
+  $("#dossierMount").innerHTML = html;
+
+  // live lever bars while editing
+  $("#dossier").querySelectorAll("input[data-lever]").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      let v = Math.max(0,Math.min(100, parseInt(inp.value)||0));
+      inp.closest(".lever").querySelector(".fill").style.width = v+"%";
+    });
+  });
+  $("#add").onclick = commit;
+  $("#discard").onclick = ()=>{ $("#dossierMount").innerHTML=""; current=null; };
+}
+
+function readDossier(){
+  const root = $("#dossier"); if(!root) return null;
+  const rec = {...current};
+  root.querySelectorAll("[data-k]").forEach(el=>{
+    rec[el.dataset.k] = el.tagName==="H2" ? el.textContent.trim() : el.value.trim();
+  });
+  const lv = {};
+  root.querySelectorAll("input[data-lever]").forEach(el=>{
+    lv[el.dataset.lever] = Math.max(0,Math.min(100, parseInt(el.value)||0));
+  });
+  rec.leviers = lv;
+  return rec;
+}
+
+function commit(){
+  const rec = readDossier(); if(!rec) return;
+  base.push(rec);
+  renderBase();
+  $("#dossierMount").innerHTML=""; current=null;
+  $("#name").value=""; $("#name").focus();
+}
+
+// --- base table ---------------------------------------------------
+function renderBase(){
+  const tb = $("#tbody");
+  if(!base.length){ tb.innerHTML = `<tr><td colspan="6" class="empty">Aucune fiche ajoutée pour l'instant.</td></tr>`; }
+  else {
+    tb.innerHTML = base.map((r,i)=>`<tr>
+      <td>${esc(r.nom||"—")}</td>
+      <td>${esc(r.plateforme_principale||"—")}</td>
+      <td>${esc(r.archetype_primaire||"—")}</td>
+      <td>${esc(r.regime_tag||"—")}</td>
+      <td>${esc(r.confiance||"—")}</td>
+      <td><button class="rm" data-i="${i}" title="Retirer">✕</button></td>
+    </tr>`).join("");
+    tb.querySelectorAll(".rm").forEach(b=>b.onclick=()=>{ base.splice(+b.dataset.i,1); renderBase(); });
+  }
+  $("#count").textContent = base.length + (base.length===1?" fiche":" fiches");
+}
+
+// --- CSV export ---------------------------------------------------
+function exportCSV(){
+  if(!base.length){ flashErr("La base est vide — ajoute au moins une fiche avant d'exporter."); return; }
+  const cols = ["nom","handle","plateforme_principale","plateformes_secondaires","regime_tag","statut",
+    "background","audience_amorce","avantages_injustes","breakthrough_vecteur","breakthrough_type",
+    "facteur_chance","replicabilite","archetype_primaire","archetype_secondaire","construction_persona",
+    "lane","angle_unique","formats","cadence","codes_visuels","audience_cible","contrat_emotionnel",
+    "monetisation","conversion_statut","empreinte",
+    ...LEVERS.map(l=>"levier_"+l[0]),"confiance","sources"];
+  const esc2 = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  const rows = base.map(r=>{
+    const flat = {...r};
+    LEVERS.forEach(l=> flat["levier_"+l[0]] = (r.leviers||{})[l[0]] ?? "");
+    flat.sources = (r.sources||[]).join(" | ");
+    return cols.map(c=>esc2(flat[c])).join(",");
+  });
+  const csv = "﻿"+cols.join(",")+"\n"+rows.join("\n");
+  const blob = new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "base-creatrices.csv";
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// --- utils / wiring -----------------------------------------------
+function esc(s){ return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function flashErr(m){ const e=$("#err"); e.textContent=m; e.classList.add("on"); }
+function clearErr(){ $("#err").classList.remove("on"); }
+
+async function run(){
+  const name = $("#name").value.trim();
+  if(!name){ flashErr("Entre un nom ou un pseudo pour lancer la recherche."); return; }
+  clearErr(); $("#dossierMount").innerHTML=""; current=null;
+  $("#go").disabled = true;
+  $("#status").classList.add("on"); $("#statusTxt").textContent = "Lecture des sources publiques…";
+  try{
+    const d = await research(name, $("#plat").value);
+    renderDossier(d);
+  }catch(err){
+    flashErr("La recherche n'a rien renvoyé d'exploitable. Vérifie l'orthographe du pseudo, précise la plateforme, ou relance.");
+  }finally{
+    $("#go").disabled = false; $("#status").classList.remove("on");
+  }
+}
+
+$("#go").onclick = run;
+$("#name").addEventListener("keydown",e=>{ if(e.key==="Enter") run(); });
+$("#export").onclick = exportCSV;
+renderBase();
+</script>
+</body>
+</html>
