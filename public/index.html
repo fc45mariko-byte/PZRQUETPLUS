@@ -111,6 +111,50 @@
   .empty{padding:24px;text-align:center;color:#6b6172;font-family:var(--mono);font-size:12px}
   .basefoot{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .note{font-family:var(--mono);font-size:11px;color:#6b6172}
+
+  /* taxonomie link */
+  .tax-link{background:none;border:none;color:var(--bone-dim);font-family:var(--mono);
+             font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+             text-decoration:underline;padding:0}
+  .tax-link:hover{color:var(--signal)}
+  .tax-nav{margin-top:14px}
+
+  /* taxonomie overlay panel */
+  .overlay{position:fixed;inset:0;background:rgba(23,19,27,.82);backdrop-filter:blur(2px);
+           z-index:100;display:none;align-items:flex-start;justify-content:center;
+           padding:40px 16px;overflow-y:auto}
+  .overlay.on{display:flex}
+  .panel{background:var(--ink);border:1px solid var(--line-2);border-radius:16px;
+         max-width:1000px;width:100%;padding:22px;animation:rise .3s ease}
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:6px}
+  .panel-head h2{font-family:var(--display);font-weight:800;font-size:28px;margin:0}
+  .panel-head p{color:var(--bone-dim);font-size:13px;margin:8px 0 0;max-width:60ch}
+  .panel-close{background:none;border:1px solid var(--line-2);color:var(--bone);border-radius:8px;
+               width:32px;height:32px;cursor:pointer;font-size:16px;flex:0 0 auto}
+  .panel-close:hover{border-color:var(--signal);color:var(--signal)}
+
+  .arch-grid{margin-top:20px;display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:720px){.arch-grid{grid-template-columns:1fr 1fr}}
+  .acard{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .achead{display:flex;align-items:baseline;gap:9px;margin-bottom:3px}
+  .acode{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--signal);
+         border:1px solid rgba(242,67,126,.4);border-radius:6px;padding:2px 6px}
+  .aname{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+  .aessence{font-size:12.5px;color:var(--bone);font-style:italic;margin:2px 0 12px}
+  .arow{margin:0 0 8px}
+  .arow dt{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+           color:var(--bone-dim);margin:0 0 2px}
+  .arow dd{margin:0;font-size:12.5px}
+  .abars{display:grid;gap:5px;margin:12px 0}
+  .abar{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:8px}
+  .abar span{font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;color:var(--bone-dim)}
+  .atrack{height:6px;background:var(--ink);border-radius:4px;overflow:hidden}
+  .afill{height:100%;background:linear-gradient(90deg,var(--signal),#ff85ad);border-radius:4px}
+  .apick{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .apick button{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+                background:var(--ink);border:1px solid var(--line-2);color:var(--bone);
+                border-radius:7px;padding:7px 10px;cursor:pointer}
+  .apick button:hover{border-color:var(--signal);color:var(--signal)}
 </style>
 </head>
 <body>
@@ -144,6 +188,7 @@
       <span class="scan"></span>
     </div>
     <div class="err" id="err"></div>
+    <p class="tax-nav"><button class="tax-link" id="taxNav">Voir la taxonomie des 9 archétypes ↗</button></p>
   </div>
 
   <!-- dossier gets injected here -->
@@ -166,6 +211,21 @@
     </div>
   </div>
 </div>
+
+<!-- taxonomie des archétypes — panneau d'aide contextuelle -->
+<div class="overlay" id="archOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Neuf archétypes</h2>
+        <p>Chaque archétype est défini par un couple <b>ce qu'elle performe × contrat émotionnel</b>, avec une signature de leviers. Choisis un primaire et, si besoin, un secondaire pour la fiche en cours.</p>
+      </div>
+      <button class="panel-close" id="archClose" aria-label="Fermer">✕</button>
+    </div>
+    <div class="arch-grid" id="archGrid"></div>
+  </div>
+</div>
+
 
 <script>
 const $ = s => document.querySelector(s);
@@ -244,11 +304,13 @@ function renderDossier(d){
     const val = (d[key]??"")===""?"non vérifié":d[key];
     const flag = (unv.has(key)||String(val).toLowerCase()==="non vérifié")
       ? `<span class="flag unv">non vérifié</span>` : "";
+    const isArch = key==="archetype_primaire" || key==="archetype_secondaire";
+    const archBtn = isArch ? `<button type="button" class="tax-link" data-arch-target="${key}">taxonomie ↗</button>` : "";
     const long = String(val).length>40;
     const input = long
       ? `<textarea data-k="${key}">${esc(val)}</textarea>`
       : `<input data-k="${key}" value="${esc(val)}">`;
-    return `<div class="cell"><label>${label}${flag}</label>${input}</div>`;
+    return `<div class="cell"><label>${label}${flag}${archBtn}</label>${input}</div>`;
   };
   let html = `
     <div class="dossier on" id="dossier">
@@ -294,6 +356,9 @@ function renderDossier(d){
   });
   $("#add").onclick = commit;
   $("#discard").onclick = ()=>{ $("#dossierMount").innerHTML=""; current=null; };
+  $("#dossier").querySelectorAll("[data-arch-target]").forEach(btn=>{
+    btn.addEventListener("click",()=> openArchPanel(btn.dataset.archTarget));
+  });
 }
 
 function readDossier(){
@@ -385,6 +450,143 @@ $("#go").onclick = run;
 $("#name").addEventListener("keydown",e=>{ if(e.key==="Enter") run(); });
 $("#export").onclick = exportCSV;
 renderBase();
+
+// --- taxonomie des archétypes (panneau d'aide contextuelle) -------
+const ARCHETYPES = [
+ {code:"CONF", name:"La Confidente", essence:"Elle te partage une vie et une relation avec toi.",
+  perf:"Une vie quotidienne rendue intime et régulière.",
+  contract:"« Elle est mon amie, ma grande sœur. » — intimité, parasocialité, appartenance douce.",
+  vector:"Régularité, journaling, vlog, ton direct « on est ensemble ».",
+  formats:"Vlog, GRWM, storytime, routines, contenu peu filtré.",
+  money:"Affinité de marque, lifestyle, produits dérivés, communauté payante, édition.",
+  ex:"Léna Situations, EnjoyPhoenix (période lifestyle).",
+  trap:"L'intimité impose une cadence épuisante ; toute distance perçue lit comme une trahison. Interchangeable si l'angle n'est pas assez singulier.",
+  lev:{att:55,ide:80,rec:65,pre:25,psy:90,con:50}},
+ {code:"EXP", name:"L'Experte", essence:"Elle démontre une compétence et te l'enseigne.",
+  perf:"Une maîtrise (beauté, cuisine, finance, parentalité, savoir).",
+  contract:"« J'apprends, je lui fais confiance. » — autorité, utilité, gain concret.",
+  vector:"Tuto, démonstration de maîtrise, before/after, vulgarisation.",
+  formats:"Tuto, explainer, tests produits, deep-dives, threads.",
+  money:"Placements crédibles, formations, marque propre, livres, ambassadrice.",
+  ex:"Sananas, EnjoyPhoenix (origine beauté), créatrices cuisine/finance.",
+  trap:"La compétence se commoditise vite ; sans persona, la créatrice est remplaçable par la suivante qui fait le même tuto en mieux.",
+  lev:{att:45,ide:55,rec:60,pre:90,psy:45,con:65}},
+ {code:"EST", name:"L'Esthète", essence:"Elle expose un goût et une image à convoiter.",
+  perf:"Un goût, un œil, une esthétique — pas une compétence à apprendre.",
+  contract:"« Je veux son style, son œil, son monde. » — aspiration, désir mimétique.",
+  vector:"Curation visuelle, mode, luxe, mood, cohérence d'image obsessionnelle.",
+  formats:"Lookbook, mode, intérieurs, mood edits, fashion week.",
+  money:"Contrats mode/beauté, égéries, marque propre, luxe, ambassadrice.",
+  ex:"It-girls mode françaises, créatrices front-row.",
+  trap:"Le goût sans compétence transférable = fragilité : dès que l'image cesse d'aspirer (âge, saturation, changement de codes), l'audience part sans rien à retenir.",
+  lev:{att:60,ide:90,rec:40,pre:35,psy:75,con:70}},
+ {code:"CORP", name:"La Performeuse-corps", essence:"Elle performe un corps et une discipline.",
+  perf:"Un corps + une rigueur, comme preuve vivante d'une méthode.",
+  contract:"« Je veux sa discipline, son corps. » — aspiration + admiration de l'effort.",
+  vector:"Transformation, coaching, régularité visible, avant/après.",
+  formats:"Séances, transformation, programmes, challenges, nutrition.",
+  money:"Programmes, apps, marque sport/nutrition, salles, cohortes. Conversion forte.",
+  ex:"Sissy Mua, Juju Fitcats.",
+  trap:"Le corps-preuve enferme : blessure, grossesse, âge ou changement physique menacent directement le modèle. Frontière glissante avec l'injonction et le trouble alimentaire.",
+  lev:{att:55,ide:65,rec:60,pre:85,psy:60,con:85}},
+ {code:"COM", name:"La Comique", essence:"Elle déclenche le rire et la reconnaissance.",
+  perf:"Le rire + « elle a capté ma vie » via sketch et personnages.",
+  contract:"« Elle me fait rire, elle me comprend. » — joie, référence partagée.",
+  vector:"Sketch, personnages, comédie relatable, timing.",
+  formats:"Sketch, personnages récurrents, parodie, comédie du quotidien.",
+  money:"Spectacle/tournée, comédie de marque, crossover média, écriture.",
+  ex:"Natoo, Marion Séclin, créatrices sketch TikTok.",
+  trap:"Le rire ne se force pas et vieillit ; le personnage peut écraser la personne. Difficile à convertir en statut sérieux ou en business hors divertissement.",
+  lev:{att:90,ide:70,rec:55,pre:30,psy:80,con:45}},
+ {code:"SPEC", name:"La Spectacle", essence:"Elle est une persona plus grande que nature.",
+  perf:"Un personnage hyperbolique, souvent alimenté par le clash et le drame.",
+  contract:"« Je ne peux pas détacher les yeux. » — fascination, on l'adore ou on la déteste.",
+  vector:"Spectacle, controverse, pipeline télé-réalité → Instagram, feuilleton perso.",
+  formats:"Story-feuilleton, clash, coulisses spectaculaires, contenu-personnage.",
+  money:"Échelle/pubs, marque propre, business empire, licences, télé.",
+  ex:"Nabilla (télé-réalité → persona → business).",
+  trap:"L'attention par le drame est volatile et use la réputation ; l'escalade est un tapis roulant. Le passage du spectacle au statut crédible est le mur le plus dur.",
+  lev:{att:95,ide:85,rec:55,pre:30,psy:70,con:75}},
+ {code:"TEM", name:"La Témoin", essence:"Elle témoigne d'une vulnérabilité.",
+  perf:"Une vérité personnelle exposée (santé mentale, corps réel, épreuve).",
+  contract:"« Je me sens moins seule. » — reconnaissance, solidarité, réparation.",
+  vector:"Confession, témoignage, corps réel, santé mentale, récit d'épreuve.",
+  formats:"Confessionnel, témoignage, body positive, storytime intime.",
+  money:"Livres, conférences, communauté, plaidoyer, partenariats alignés.",
+  ex:"Créatrices body positive / santé mentale francophones.",
+  trap:"La vulnérabilité comme carburant pousse à surenchérir sur sa propre douleur. Risque réel pour la créatrice, et audience qui exige toujours plus d'intimité.",
+  lev:{att:50,ide:55,rec:80,pre:40,psy:95,con:35}},
+ {code:"VOIX", name:"La Porte-voix", essence:"Elle porte une cause et fédère une tribu.",
+  perf:"Une prise de position, une cause, une identité collective.",
+  contract:"« Elle porte ce en quoi je crois. » — appartenance, sens, tribu.",
+  vector:"Activisme, féminisme, éducation politique/sociale, mobilisation.",
+  formats:"Éducatif engagé, décryptage, mobilisation, prise de parole.",
+  money:"Conférences, livres, ONG/marques alignées, projets, plaidoyer.",
+  ex:"Créatrices militantes / féministes francophones.",
+  trap:"La tribu punit la nuance et l'écart ; la pureté idéologique attendue enferme. Monétiser une cause expose au procès en récupération.",
+  lev:{att:65,ide:60,rec:75,pre:55,psy:85,con:40}},
+ {code:"BAT", name:"La Bâtisseuse", essence:"Elle construit un business à vue.",
+  perf:"Une ambition et une entreprise en train de se faire, comme contenu.",
+  contract:"« Montre-moi comment. » — aspiration, plan d'action, preuve de réussite.",
+  vector:"Build-in-public, coulisses business, argent assumé, marque.",
+  formats:"Coulisses, chiffres, méthode, lancement, behind-the-scenes.",
+  money:"Produits, cohortes, conseil, agence, fonds. Conversion maximale.",
+  ex:"Créatrices girlboss / entrepreneures visibles (souvent issues du fitness ou de la beauté).",
+  trap:"Le succès affiché doit être réel et durable, sinon l'effondrement est public. Frontière fine avec l'arnaque au « rêve entrepreneurial » et l'infoprenariat vide.",
+  lev:{att:55,ide:60,rec:75,pre:80,psy:55,con:95}},
+];
+const ARCH_LEV = [["att","ATT"],["ide","IDE"],["rec","RÉC"],["pre","PRE"],["psy","PSY"],["con","CONV"]];
+
+let archTarget = null;
+
+function renderArchGrid(){
+  $("#archGrid").innerHTML = ARCHETYPES.map(a=>`
+    <div class="acard">
+      <div class="achead"><span class="acode">${a.code}</span><span class="aname">${esc(a.name)}</span></div>
+      <p class="aessence">${esc(a.essence)}</p>
+      <dl>
+        <div class="arow"><dt>Ce qu'elle performe</dt><dd>${esc(a.perf)}</dd></div>
+        <div class="arow"><dt>Contrat émotionnel</dt><dd>${esc(a.contract)}</dd></div>
+        <div class="arow"><dt>Vecteur d'attention</dt><dd>${esc(a.vector)}</dd></div>
+        <div class="arow"><dt>Formats types</dt><dd>${esc(a.formats)}</dd></div>
+        <div class="arow"><dt>Monétisation</dt><dd>${esc(a.money)}</dd></div>
+      </dl>
+      <div class="abars">
+        ${ARCH_LEV.map(([k,l])=>`<div class="abar"><span>${l}</span>
+          <span class="atrack"><span class="afill" style="width:${a.lev[k]}%"></span></span></div>`).join("")}
+      </div>
+      <p class="arow"><dt>Exemplaires (illustratifs)</dt><dd>${esc(a.ex)}</dd></p>
+      <p class="arow"><dt>Piège / mode d'échec</dt><dd>${esc(a.trap)}</dd></p>
+      <div class="apick">
+        <button type="button" data-pick="${esc(a.name)}" data-slot="archetype_primaire">Utiliser en primaire</button>
+        <button type="button" data-pick="${esc(a.name)}" data-slot="archetype_secondaire">Utiliser en secondaire</button>
+      </div>
+    </div>`).join("");
+
+  $("#archGrid").querySelectorAll("[data-pick]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const slot = archTarget || btn.dataset.slot;
+      const field = document.querySelector(`#dossier [data-k="${slot}"]`);
+      if(field){ field.value = btn.dataset.pick; }
+      closeArchPanel();
+    });
+  });
+}
+
+function openArchPanel(targetKey){
+  archTarget = targetKey || null;
+  renderArchGrid();
+  $("#archOverlay").classList.add("on");
+}
+function closeArchPanel(){
+  $("#archOverlay").classList.remove("on");
+  archTarget = null;
+}
+
+$("#taxNav").onclick = ()=> openArchPanel(null);
+$("#archClose").onclick = closeArchPanel;
+$("#archOverlay").addEventListener("click", e=>{ if(e.target.id==="archOverlay") closeArchPanel(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeArchPanel(); });
 </script>
 </body>
 </html>
